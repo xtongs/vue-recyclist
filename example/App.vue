@@ -1,16 +1,21 @@
 <template>
   <div id="app">
-    <h1>Infinite scroll plugin for Vue.js with DOM recycling.</h1>
+    <h1>Infinite scroll component for Vue.js with DOM recycling.</h1>
+    <vue-recyclist></vue-recyclist>
   </div>
 </template>
 
 <script>
+import VueRecyclist from '../src/index'
 export default {
   name: 'app',
   data () {
     return {
 
     }
+  },
+  components: {
+    'vue-recyclist': VueRecyclist
   }
 }
 </script>
