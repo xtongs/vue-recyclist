@@ -1,6 +1,6 @@
 # vue-recyclist
 
-> Infinite scroll plugin for Vue.js with DOM recycling.
+> Infinite scroll list for Vue.js with DOM recycling.
 
 ## Build Setup
 
