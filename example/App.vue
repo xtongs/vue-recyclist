@@ -4,7 +4,7 @@
       <h1>VueRecyclist</h1>
       <h2>Infinite scroll list for Vue.js with DOM recycling.</h2>
     </header>
-    <vue-recyclist class="list" :items="list" :loadmore="loadItems" :loading="loading" :nomore="nomore">
+    <vue-recyclist class="list" :list="list" :loadmore="loadItems" :loading="loading" :nomore="nomore">
       <div slot="tombstone" class="item tombstone">
         <img class="avatar" src="./images/unknown.jpg"/>
         <div class="bubble">
@@ -69,7 +69,6 @@ export default {
       }
     },
     loadItems () {
-      console.log('loadItems')
       this.loading = true
       let items = []
       setTimeout(() => {

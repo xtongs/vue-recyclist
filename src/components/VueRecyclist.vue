@@ -1,11 +1,11 @@
 <template>
-  <div class="vue-recyclist">
-    <div class="vue-recyclist-items">
+  <div ref="list" class="vue-recyclist">
+    <div ref="items" class="vue-recyclist-items">
       <div class="vue-recyclist-item vue-recyclist-tomb" v-for="t in tombs" v-if="tombstone">
         <slot name="tombstone"></slot>
       </div>
-      <div class="vue-recyclist-item" v-for="(item, index) in items">
-        <slot name="item" :data="item" :index="index"></slot>
+      <div ref="item" class="vue-recyclist-item" v-for="(item, index) in items">
+        <slot name="item" :data="item.data" :index="index"></slot>
       </div>
       <div class="vue-recyclist-item vue-recyclist-tomb" v-for="t in tombs" v-if="tombstone">
         <slot name="tombstone"></slot>
@@ -31,11 +31,16 @@
   export default {
     data () {
       return {
-        name: 'VueRecyclist'
+        name: 'VueRecyclist',
+        items: [], // Full list items
+        height: 0, // Full list height
+        top: 0, // Full list scrollTop
+        loaded: 0, // Loaded items index
+        some: 0
       }
     },
     props: {
-      items: {
+      list: {
         type: Array,
         default: () => []
       },
@@ -70,6 +75,31 @@
     computed: {
 
     },
+    watch: {
+      list () {
+        for (let i = this.loaded; i < this.list.length; i++) {
+          this.items.push({
+            data: this.list[i],
+            node: null,
+            height: 0,
+            top: 0
+          })
+          this.top = this.$refs.list.scrollTop
+          this.$nextTick(() => {
+            const d = this.items[i]
+            d.node = this.$refs.item[i]
+            d.height = d.node.offsetHeight
+            d.top = this.height
+            this.height = d.top + d.height
+            this.$refs.items.style.height = this.height + 'px'
+            this.$refs.list.scrollTop = this.top
+            this.$refs.item[i].style.opacity = 1
+            this.$refs.item[i].style.transform = 'translate3d(0,' + d.top + 'px,0)'
+          })
+        }
+        this.loaded = this.list.length
+      }
+    },
     mounted () {
       this.$el.addEventListener('scroll', this.onScroll.bind(this))
       window.addEventListener('resize', this.onResize.bind(this))
@@ -84,7 +114,7 @@
         }
       },
       onResize () {
-        console.log(this.$el.scrollTop)
+        console.log('resize')
       }
     },
     destroyed () {
@@ -105,6 +135,7 @@
       padding: 0;
       .vue-recyclist-item {
         position: absolute;
+        opacity: 0;
       }
     }
     .vue-recyclist-loading {
