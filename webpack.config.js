@@ -8,7 +8,7 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, './example'),
-    publicPath: './example/',
+    publicPath: process.env.NODE_ENV === 'production' ? './example/' : 'example/',
     filename: '[name].js'
   },
   module: {

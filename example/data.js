@@ -1,6 +1,5 @@
 const data = {
   avatars: 4,
-  images: 77,
   messages: [
     "when you popState and actually being well, we expect it further",
     "But I'm going to take care of ripping out my code in the fact that just something like that",
@@ -28,7 +27,6 @@ const data = {
     "document",
     "&quot; So",
     "Yeah",
-    "",
     "which is fine",
     "And that we'll do sc",
     "view",
@@ -223,7 +221,6 @@ const data = {
     "So we want to do that, actually just kind of amazing",
     "You know",
     "Yeah",
-    "",
     "which is the current view was the new one that's a layout",
     "I don't you ask the question ties in it is when it's like a progressive to deal with, with contain strict",
     "now here",

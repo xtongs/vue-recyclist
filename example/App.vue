@@ -4,7 +4,7 @@
       <h1>VueRecyclist</h1>
       <h2>Infinite scroll list for Vue.js with DOM recycling.</h2>
     </header>
-    <vue-recyclist class="list" :items="list">
+    <vue-recyclist class="list" :items="list" :loadmore="loadItems" :loading="loading" :nomore="nomore">
       <div slot="tombstone" class="item tombstone">
         <img class="avatar" src="./images/unknown.jpg"/>
         <div class="bubble">
@@ -19,19 +19,18 @@
 
       <template slot="item" scope="props">
         <div class="item" @click="itemClicked(props)">
-          <img class="avatar" src="./images/unknown.jpg"/>
+          <img class="avatar" :src="props.data.avatar"/>
           <div class="bubble">
-            <p></p>
-            <p></p>
-            <p></p>
+            <p>{{ props.data.msg }}</p>
             <div class="meta">
-              <time class="posted-date"></time>
+              <time class="posted-date">{{ props.data.time }}</time>
             </div>
           </div>
         </div>
       </template>
 
-      <!--<div slot="loading">spinner</div>-->
+      <!--<div slot="loading">Loading Data</div>-->
+      <!--<div slot="nomore">No More Data</div>-->
     </vue-recyclist>
   </div>
 </template>
@@ -43,19 +42,46 @@ export default {
   name: 'app',
   data () {
     return {
-      list: new Array(10).join(0).split(''),
-      data: Data
+      // data
+      initTime: new Date().getTime(),
+      id: 0,
+      // list
+      list: [],
+      loading: false,
+      nomore: false
     }
   },
   components: {
     'vue-recyclist': VueRecyclist
   },
   mounted () {
-
+    this.loadItems()
   },
   methods: {
+    getItem (id) {
+      const avatar = Math.floor(Math.random() * Data.avatars)
+      const msg = Data.messages[Math.floor(Math.random() * Data.messages.length)]
+      return {
+        id: 10000 + id,
+        avatar: './images/avatar' + avatar + '.jpg',
+        msg: msg,
+        time: new Date(Math.floor(this.initTime + id * 20 * 1000 + Math.random() * 20 * 1000)).toString(),
+      }
+    },
+    loadItems () {
+      console.log('loadItems')
+      this.loading = true
+      let items = []
+      setTimeout(() => {
+        for (let i = 0 ; i < 20; i++) {
+          items.push(this.getItem(this.id++))
+        }
+        this.list = this.list.concat(items)
+        this.loading = false
+      }, 1000)
+    },
     itemClicked (props) {
-      console.log(props)
+      console.log('Item:' + props.index, props.data)
     }
   }
 }
@@ -128,9 +154,10 @@ export default {
       padding: 10px 0;
       width: 100%;
       will-change: transform;
+      text-align: left;
       .avatar {
         border-radius: 500px;
-        margin-left: 20px;
+        margin-left: 15px;
         margin-right: 6px;
         min-width: 48px;
         width: 48px;
@@ -157,7 +184,7 @@ export default {
         position: relative;
         max-width: 420px;
         min-width: 80px;
-        margin: 0 5px;
+        margin: 0 20px 0 5px;
         &:before {
           content: '';
           border-style: solid;
