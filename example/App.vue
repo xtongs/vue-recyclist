@@ -2,9 +2,9 @@
   <div id="app">
     <header>
       <h1>VueRecyclist</h1>
-      <h2>Infinite scroll list for Vue.js with DOM recycling.</h2>
+      <h2>Infinite scroll list for Vue.js with DOM recycling. <a href="https://github.com/xtongs/vue-recyclist">Github</a></h2>
     </header>
-    <vue-recyclist class="list" :list="list" :loadmore="loadItems" :loading="loading" :nomore="nomore">
+    <vue-recyclist class="list" :list="list" :tombstone="tombstone" :tombs="tombs" :duration="duration" :offset="offset" :loadmore="loadItems" :loading="loading" :nomore="nomore">
       <div slot="tombstone" class="item tombstone">
         <img class="avatar" src="./images/unknown.jpg"/>
         <div class="bubble">
@@ -32,6 +32,7 @@
       <!--<div slot="loading">Loading Data</div>-->
       <!--<div slot="nomore">No More Data</div>-->
     </vue-recyclist>
+    <p class="info">Inspired by <a href="https://developers.google.com/web/updates/2016/07/infinite-scroller">Complexities of an Infinite Scroller</a></p>
   </div>
 </template>
 
@@ -45,8 +46,13 @@ export default {
       // data
       initTime: new Date().getTime(),
       id: 0,
+      num: 10,
       // list
       list: [],
+      tombstone: false,
+      tombs: 10,
+      duration: 200,
+      offset: 500,
       loading: false,
       nomore: false
     }
@@ -65,14 +71,14 @@ export default {
         id: 10000 + id,
         avatar: './images/avatar' + avatar + '.jpg',
         msg: msg,
-        time: new Date(Math.floor(this.initTime + id * 20 * 1000 + Math.random() * 20 * 1000)).toString(),
+        time: new Date(Math.floor(this.initTime + id * this.num * 1000 + Math.random() * this.num * 1000)).toString(),
       }
     },
     loadItems () {
       this.loading = true
       let items = []
       setTimeout(() => {
-        for (let i = 0 ; i < 20; i++) {
+        for (let i = 0 ; i < this.num; i++) {
           items.push(this.getItem(this.id++))
         }
         this.list = this.list.concat(items)
@@ -128,6 +134,17 @@ export default {
         }
         h2 {
           font-size: 14px;
+          a {
+            color: inherit;
+          }
+        }
+      }
+      .info {
+        font-size: 12px;
+        color: #999;
+        a {
+          font-style: italic;
+          color: inherit;
         }
       }
       .cssloading-circle {
@@ -144,7 +161,6 @@ export default {
     margin: 0 auto;
     padding: 0;
     border: 1px solid #ddd;
-    background: #fff;
     list-style-type: none;
     text-align: center;
     background: #eee;

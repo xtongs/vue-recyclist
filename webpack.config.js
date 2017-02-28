@@ -43,7 +43,7 @@ module.exports = {
   },
   resolve: {
     alias: {
-      'vue$': 'vue/dist/vue.min.js'
+      'vue$': 'vue/dist/vue.' + (process.env.NODE_ENV === 'production' ? 'min' : 'common') + '.js'
     }
   },
   devServer: {
