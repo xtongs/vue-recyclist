@@ -7,11 +7,11 @@
       <div ref="item" class="vue-recyclist-item" :style="{top: item.top + 'px'}" v-for="(item, index) in items" v-if="index >= start - size && index < start + size">
         <slot name="item" :data="item.data" :index="index"></slot>
       </div>
-      <div :ref="'item'+index" class="vue-recyclist-item" :style="{top: '-10000px'}" v-for="(item, index) in items" v-if="!item.height && !item.top">
-        <slot name="item" :data="item.data"></slot>
-      </div>
       <div class="vue-recyclist-item vue-recyclist-tomb" v-for="t in size" v-if="tombstone">
         <slot name="tombstone"></slot>
+      </div>
+      <div :ref="'item'+index" class="vue-recyclist-item" :style="{top: '-10000px'}" v-for="(item, index) in items" v-if="!item.height && !item.top">
+        <slot name="item" :data="item.data"></slot>
       </div>
     </div>
 
@@ -201,7 +201,13 @@
       padding: 0;
       .vue-recyclist-item {
         position: absolute;
-        &.vue-recyclist-tomb {}
+        opacity: 1;
+        z-index: 1;
+        &.vue-recyclist-tomb {
+          opacity: 1;
+          z-index: 0;
+          top: -10000px;
+        }
       }
     }
     .vue-recyclist-loading {

@@ -6,17 +6,19 @@
     </header>
     <vue-recyclist class="list" :list="list" :tombstone="tombstone" :size="size" :duration="duration" :offset="offset" :loadinit="loadInit"
       :loadmore="loadItems" :loading="loading" :nomore="nomore">
-      <div slot="tombstone" class="item tombstone">
-        <img class="avatar" src="./images/unknown.jpg" />
-        <div class="bubble">
-          <p></p>
-          <p></p>
-          <p></p>
-          <div class="meta">
-            <time class="posted-date"></time>
+      <template slot="tombstone" scope="props">
+        <div class="item tombstone">
+          <img class="avatar" src="./images/unknown.jpg" />
+          <div class="bubble">
+            <p></p>
+            <p></p>
+            <p></p>
+            <div class="meta">
+              <time class="posted-date"></time>
+            </div>
           </div>
         </div>
-      </div>
+      </template>
 
       <template slot="item" scope="props">
         <div class="item" @click="itemClicked(props)">
@@ -50,7 +52,7 @@
         num: 10,
         // list
         list: [],
-        tombstone: false,
+        tombstone: true,
         size: this.num,
         duration: 200,
         offset: 500,
