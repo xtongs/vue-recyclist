@@ -2,12 +2,32 @@
   "name": "vue-recyclist",
   "description": "Infinite scroll plugin for Vue.js with DOM recycling.",
   "version": "0.0.1",
+  "main": "dist/vue-recyclist.js",
   "author": "Tong <xtongs@gmail.com>",
-  "private": true,
+  "files": [
+    "dist/vue-recyclist.js",
+    "src"
+  ],
   "scripts": {
     "dev": "cross-env NODE_ENV=development webpack-dev-server --inline --hot",
     "build": "cross-env NODE_ENV=production webpack -p && cp example/vue-recyclist.js dist/"
   },
+  "keywords": [
+    "vue",
+    "vue components",
+    "infinite loading",
+    "infinite scroll",
+    "dom recycling"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xtongs/vue-recyclist.git"
+  },
+  "bugs": {
+    "url": "https://github.com/xtongs/vue-recyclist/issues"
+  },
+  "homepage": "https://github.com/xtongs/vue-recyclist",
+  "license": "MIT",
   "dependencies": {
     "vue": "^2.1.0"
   },
