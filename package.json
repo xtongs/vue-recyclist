@@ -10,7 +10,8 @@
   ],
   "scripts": {
     "dev": "cross-env NODE_ENV=development webpack-dev-server --inline --hot",
-    "build": "cross-env NODE_ENV=production webpack -p && cp example/vue-recyclist.js dist/"
+    "build": "cross-env NODE_ENV=production webpack -p && cp example/vue-recyclist.js dist/",
+    "release": "bash ./release.sh"
   },
   "keywords": [
     "vue",

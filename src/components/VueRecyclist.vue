@@ -4,31 +4,30 @@
       <div class="vue-recyclist-item vue-recyclist-tomb" v-for="t in size" v-if="tombstone">
         <slot name="tombstone"></slot>
       </div>
-      <div ref="item" class="vue-recyclist-item" v-for="(item, index) in items" v-if="index >= start - size && index < start + size"
-        :style="{top: item.top + 'px'}">
+      <div ref="item" class="vue-recyclist-item" :style="{top: item.top + 'px'}" v-for="(item, index) in items" v-if="index >= start - size && index < start + size">
         <slot name="item" :data="item.data" :index="index"></slot>
-    </div>
-    <div :ref="'item'+index" class="vue-recyclist-item" v-for="(item, index) in items" v-if="!item.height && !item.top" :style="{top: '-10000px'}">
-      <slot name="item" :data="item.data"></slot>
-    </div>
-    <div class="vue-recyclist-item vue-recyclist-tomb" v-for="t in size" v-if="tombstone">
-      <slot name="tombstone"></slot>
-    </div>
-  </div>
-
-  <div class="vue-recyclist-loading" v-show="loading && !nomore">
-    <slot name="loading">
-      <div class="vue-recyclist-loading-content">
-        <div class="cssloading-circle spinner"></div>
       </div>
-    </slot>
-  </div>
+      <div :ref="'item'+index" class="vue-recyclist-item" :style="{top: '-10000px'}" v-for="(item, index) in items" v-if="!item.height && !item.top">
+        <slot name="item" :data="item.data"></slot>
+      </div>
+      <div class="vue-recyclist-item vue-recyclist-tomb" v-for="t in size" v-if="tombstone">
+        <slot name="tombstone"></slot>
+      </div>
+    </div>
 
-  <div class="vue-recyclist-nomore" v-show="nomore && !loading">
-    <slot name="nomore">
-      <div>End of list</div>
-    </slot>
-  </div>
+    <div class="vue-recyclist-loading" v-show="loading && !nomore">
+      <slot name="loading">
+        <div class="vue-recyclist-loading-content">
+          <div class="cssloading-circle spinner"></div>
+        </div>
+      </slot>
+    </div>
+
+    <div class="vue-recyclist-nomore" v-show="nomore && !loading">
+      <slot name="nomore">
+        <div>End of list</div>
+      </slot>
+    </div>
   </div>
 </template>
 <script>
