@@ -5,6 +5,11 @@
 ## Usage
 TODO
 
+## TODO
+1. add tombstone support
+2. solve ios webkit problem when using transform
+3. remove rendered html comment string by vue.js when v-if is false
+
 ## Development
 
 ``` bash

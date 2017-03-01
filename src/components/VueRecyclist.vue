@@ -1,43 +1,45 @@
 <template>
-  <div ref="list" class="vue-recyclist">
-    <div ref="items" class="vue-recyclist-items">
-      <div class="vue-recyclist-item vue-recyclist-tomb" v-for="t in tombs" v-if="tombstone">
+  <div class="vue-recyclist">
+    <div ref="list" class="vue-recyclist-items">
+      <div class="vue-recyclist-item vue-recyclist-tomb" v-for="t in size" v-if="tombstone">
         <slot name="tombstone"></slot>
       </div>
-      <div ref="item" class="vue-recyclist-item" v-for="(item, index) in items" v-if="index >= start && index <= end" :style="{top: item.top + 'px'}">
+      <div ref="item" class="vue-recyclist-item" v-for="(item, index) in items" v-if="index >= start - size && index < start + size"
+        :style="{top: item.top + 'px'}">
         <slot name="item" :data="item.data" :index="index"></slot>
-      </div>
-      <div class="vue-recyclist-item vue-recyclist-tomb" v-for="t in tombs" v-if="tombstone">
-        <slot name="tombstone"></slot>
-      </div>
     </div>
+    <div :ref="'item'+index" class="vue-recyclist-item" v-for="(item, index) in items" v-if="!item.height && !item.top" :style="{top: '-10000px'}">
+      <slot name="item" :data="item.data"></slot>
+    </div>
+    <div class="vue-recyclist-item vue-recyclist-tomb" v-for="t in size" v-if="tombstone">
+      <slot name="tombstone"></slot>
+    </div>
+  </div>
 
-    <div class="vue-recyclist-loading" v-show="loading && !nomore">
-      <slot name="loading">
-        <div class="vue-recyclist-loading-content">
-          <div class="cssloading-circle spinner"></div>
-        </div>
-      </slot>
-    </div>
+  <div class="vue-recyclist-loading" v-show="loading && !nomore">
+    <slot name="loading">
+      <div class="vue-recyclist-loading-content">
+        <div class="cssloading-circle spinner"></div>
+      </div>
+    </slot>
+  </div>
 
-    <div class="vue-recyclist-nomore" v-show="nomore && !loading">
-      <slot name="nomore">
-        <div>End of list</div>
-      </slot>
-    </div>
+  <div class="vue-recyclist-nomore" v-show="nomore && !loading">
+    <slot name="nomore">
+      <div>End of list</div>
+    </slot>
+  </div>
   </div>
 </template>
 <script>
   export default {
-    data () {
+    data() {
       return {
         name: 'VueRecyclist',
         items: [], // Wrapped full list items
         height: 0, // Full list height
         top: 0, // Full list scrollTop
-        loaded: 0, // Loaded items index
-        start: 0, // Visible items start index
-        end: 0 // Visible items end index
+        start: 0 // Visible items start index
       }
     },
     props: {
@@ -49,20 +51,25 @@
         type: Boolean,
         default: false // Whether to show tombstones.
       },
-      tombs: {
+      size: {
         type: Number,
-        default: 10 // Number of tombstones beyond current view in both scroll directions.
-      },
-      duration: {
-        type: Number,
-        default: 200 // The animation interval (in ms) for fading in content from tombstones.
+        default: 10 // The number of items on one page.
       },
       offset: {
         type: Number,
         default: 500 // The number of pixels of additional length to allow scrolling to.
       },
+      duration: {
+        type: Number,
+        default: 200 // The animation interval (in ms) for fading in content from tombstones.
+      },
+      loadinit: {
+        type: Function, // The function of loading init items.
+        required: true
+      },
       loadmore: {
-        type: Function // The function of loading more items.
+        type: Function, // The function of loading more items.
+        required: true
       },
       loading: {
         type: Boolean,
@@ -73,69 +80,82 @@
         default: false // Whether to show nomore status.
       }
     },
-    computed: {
-
-    },
     watch: {
-      list () {
-        // only push newly added items
-        for (let i = this.loaded; i < this.list.length; i++) {
-          this.items.push({
-            data: this.list[i],
-            node: null,
-            height: 0,
-            top: 0
-          })
-          // remember last scrolltop
-          this.top = this.$refs.list.scrollTop
-          // update full list height and newly added items position
-          this.$nextTick(() => {
-            this.items[i].node = this.$refs.item[i - this.start]
-            this.items[i].top = this.height
-            this.height = this.items[i].top + this.items[i].node.offsetHeight
-            this.$refs.items.style.height = this.height + 'px'
-            this.$refs.list.scrollTop = this.top
+      list(val) {
+        if (val.length > this.items.length) {
+          let loads = []
+          // only push newly added items
+          for (let i = this.items.length; i < this.list.length; i++) {
+            this.items.push({
+              data: this.list[i],
+              height: 0,
+              top: 0
+            })
+            // remember last scrolltop
+            this.top = this.$el.scrollTop
+            // update full list height and newly added items position
+            loads.push(this.$nextTick().then(() => {
+              this.updateItem(i)
+              // restore list scrolltop
+              this.$el.scrollTop = this.top
+            }))
+          }
+          // fill list
+          Promise.all(loads).then(() => {
+            this.fillList()
           })
         }
-        // update loaded items number
-        this.loaded = this.list.length
-        this.end = this.loaded
-        // fullfill list
-        this.$nextTick(() => {
-          this.fullFill()
-        })
       }
     },
-    mounted () {
+    mounted() {
       this.$el.addEventListener('scroll', this.onScroll.bind(this))
       window.addEventListener('resize', this.onResize.bind(this))
+      this.loadinit()
     },
     methods: {
-      fullFill () {
+      fillList() {
         // fullfill list if current list height is less than container height
-        if (this.height < this.$refs.list.offsetHeight) {
+        if (this.height < this.$el.offsetHeight) {
           this.loadmore()
         }
       },
-      updateIndex () {
-        // update visible items start and end index
+      updateItem(index) {
+        if (this.$refs['item' + index][0]) {
+          // set current item height and top
+          this.items[index].height = this.$refs['item' + index][0].offsetHeight
+          // loop all items to update list height
+          this.height = 0
+          for (let i = 0; i < this.items.length; i++) {
+            if (i < index) {
+              this.items[index].top += this.items[i].height
+            }
+            this.height += this.items[i].height
+          }
+          // update list height
+          this.$refs.list.style.height = this.height + 'px'
+        }
+      },
+      updateIndex() {
+        // update visible items start index
         let top = this.$el.scrollTop
         let s = this.start
-        if (this.items[s].top < top) {
-          for (let i = s + 1; i < this.items.length; i++) {
-            if (this.items[i].top <= top) {
-              this.start++
+        if (this.items[s]) {
+          if (this.items[s].top < top) {
+            for (let i = s + 1; i < this.items.length; i++) {
+              if (this.items[i] && this.items[i].top <= top) {
+                this.start++
+              }
             }
-          }
-        } else {
-          for (let i = s; i > 0; i--) {
-            if (this.items[i].top > top) {
-              this.start--
+          } else {
+            for (let i = s; i > 0; i--) {
+              if (this.items[i].top > top) {
+                this.start--
+              }
             }
           }
         }
       },
-      onScroll () {
+      onScroll() {
         let top = this.$el.scrollTop
         let ch = this.$el.offsetHeight
         let sh = this.$el.scrollHeight
@@ -144,16 +164,31 @@
         }
         this.updateIndex()
       },
-      onResize () {
-        this.fullFill()
-        this.updateIndex()
+      onResize() {
+        // remember last scrolltop, index and top of anchor item
+        let top = this.$el.scrollTop
+        let offset, index
+        this.items.forEach((item, i) => {
+          if (item.top > top && offset === undefined) {
+            offset = item.top - top
+            index = i
+          }
+          // reset item height and top
+          item.height = item.top = 0
+          this.$nextTick(() => {
+            // recaculate item height and top then restore list scrolltop
+            this.updateItem(i)
+            this.$el.scrollTop = this.items[index].top - offset
+          })
+        })
       }
     },
-    destroyed () {
+    destroyed() {
       this.$el.removeEventListener('scroll', this.onScroll.bind(this))
       window.removeEventListener('resize', this.onResize.bind(this))
     }
   }
+
 </script>
 <style src="./cssloading.css"></style>
 <style lang="scss" scoped>
@@ -167,9 +202,7 @@
       padding: 0;
       .vue-recyclist-item {
         position: absolute;
-        &.vue-recyclist-tomb {
-
-        }
+        &.vue-recyclist-tomb {}
       }
     }
     .vue-recyclist-loading {

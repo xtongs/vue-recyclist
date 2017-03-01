@@ -4,9 +4,10 @@
       <h1>VueRecyclist</h1>
       <h2>Infinite scroll list for Vue.js with DOM recycling. <a href="https://github.com/xtongs/vue-recyclist">Github</a></h2>
     </header>
-    <vue-recyclist class="list" :list="list" :tombstone="tombstone" :tombs="tombs" :duration="duration" :offset="offset" :loadmore="loadItems" :loading="loading" :nomore="nomore">
+    <vue-recyclist class="list" :list="list" :tombstone="tombstone" :size="size" :duration="duration" :offset="offset" :loadinit="loadInit"
+      :loadmore="loadItems" :loading="loading" :nomore="nomore">
       <div slot="tombstone" class="item tombstone">
-        <img class="avatar" src="./images/unknown.jpg"/>
+        <img class="avatar" src="./images/unknown.jpg" />
         <div class="bubble">
           <p></p>
           <p></p>
@@ -19,7 +20,7 @@
 
       <template slot="item" scope="props">
         <div class="item" @click="itemClicked(props)">
-          <img class="avatar" :src="props.data.avatar"/>
+          <img class="avatar" :src="props.data.avatar" />
           <div class="bubble">
             <p>{{ props.data.msg }}</p>
             <div class="meta">
@@ -31,71 +32,78 @@
 
       <!--<div slot="loading">Loading Data</div>-->
       <!--<div slot="nomore">No More Data</div>-->
-    </vue-recyclist>
-    <p class="info">Inspired by <a href="https://developers.google.com/web/updates/2016/07/infinite-scroller">Complexities of an Infinite Scroller</a></p>
+      </vue-recyclist>
+      <p class="info">Inspired by <a href="https://developers.google.com/web/updates/2016/07/infinite-scroller">Complexities of an Infinite Scroller</a></p>
   </div>
 </template>
 
 <script>
-import Data from './data'
-import VueRecyclist from '../src/index'
-export default {
-  name: 'app',
-  data () {
-    return {
-      // data
-      initTime: new Date().getTime(),
-      id: 0,
-      num: 10,
-      // list
-      list: [],
-      tombstone: false,
-      tombs: 10,
-      duration: 200,
-      offset: 500,
-      loading: false,
-      nomore: false
-    }
-  },
-  components: {
-    'vue-recyclist': VueRecyclist
-  },
-  mounted () {
-    this.loadItems()
-  },
-  methods: {
-    getItem (id) {
-      const avatar = Math.floor(Math.random() * Data.avatars)
-      const msg = Data.messages[Math.floor(Math.random() * Data.messages.length)]
+  import Data from './data'
+  import VueRecyclist from '../src/index'
+  export default {
+    name: 'app',
+    data() {
       return {
-        id: 10000 + id,
-        avatar: './images/avatar' + avatar + '.jpg',
-        msg: msg,
-        time: new Date(Math.floor(this.initTime + id * this.num * 1000 + Math.random() * this.num * 1000)).toString(),
+        // data
+        initTime: new Date().getTime(),
+        id: 0,
+        num: 10,
+        // list
+        list: [],
+        tombstone: false,
+        size: this.num,
+        duration: 200,
+        offset: 500,
+        loading: false,
+        nomore: false
       }
     },
-    loadItems () {
-      this.loading = true
-      let items = []
-      setTimeout(() => {
-        for (let i = 0 ; i < this.num; i++) {
-          items.push(this.getItem(this.id++))
-        }
-        this.list = this.list.concat(items)
-        this.loading = false
-      }, 1000)
+    components: {
+      'vue-recyclist': VueRecyclist
     },
-    itemClicked (props) {
-      console.log('Item:' + props.index, props.data)
+    mounted() {
+
+    },
+    methods: {
+      getItem(id) {
+        const avatar = Math.floor(Math.random() * Data.avatars)
+        const msg = Data.messages[Math.floor(Math.random() * Data.messages.length)]
+        return {
+          id: 10000 + id,
+          avatar: './images/avatar' + avatar + '.jpg',
+          msg: msg,
+          time: new Date(Math.floor(this.initTime + id * this.num * 1000 + Math.random() * this.num * 1000)).toString(),
+        }
+      },
+      loadInit() {
+        this.list = []
+        this.id = 0
+        this.loadItems()
+      },
+      loadItems() {
+        this.loading = true
+        let items = []
+        setTimeout(() => {
+          for (let i = 0; i < this.num; i++) {
+            items.push(this.getItem(this.id++))
+          }
+          this.list = this.list.concat(items)
+          this.loading = false
+        }, 1000)
+      },
+      itemClicked(props) {
+        console.log('Item:' + props.index, props.data)
+      }
     }
   }
-}
+
 </script>
 
 <style lang="scss">
   html {
     height: 100%;
   }
+
   body {
     margin: 0;
     padding: 0;
@@ -125,7 +133,8 @@ export default {
         justify-content: center;
         align-items: center;
         box-sizing: border-box;
-        h1, h2 {
+        h1,
+        h2 {
           font-weight: normal;
           margin: 0;
         }
@@ -168,7 +177,6 @@ export default {
       display: flex;
       padding: 10px 0;
       width: 100%;
-      will-change: transform;
       text-align: left;
       .avatar {
         border-radius: 500px;
@@ -177,6 +185,7 @@ export default {
         min-width: 48px;
         width: 48px;
         height: 48px;
+        background-color: #ddd;
       }
       p {
         margin: 0;
@@ -195,7 +204,7 @@ export default {
         padding: 7px 10px;
         color: #333;
         background: #fff;
-        box-shadow: 0 3px 2px rgba(0,0,0,0.1);
+        box-shadow: 0 3px 2px rgba(0, 0, 0, 0.1);
         position: relative;
         max-width: 420px;
         min-width: 80px;
