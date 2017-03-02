@@ -1,33 +1,35 @@
 <template>
   <div class="vue-recyclist">
     <div ref="list" class="vue-recyclist-items">
-      <div class="vue-recyclist-item vue-recyclist-tomb" v-for="t in size" v-if="tombstone">
+      <!--Fix iOS scrolling touch problem caused by transform-->
+      <div class="vue-recyclist-fix"></div>
+      <div ref="tomb" class="vue-recyclist-item vue-recyclist-tomb" v-for="t in size * 2" v-if="tombstone" :style="tombStyle(t-1)">
         <slot name="tombstone"></slot>
       </div>
-      <div ref="item" class="vue-recyclist-item" :style="{top: item.top + 'px'}" v-for="(item, index) in items" v-if="index >= start - size && index < start + size">
+      <div ref="item" class="vue-recyclist-item" :style="{transform: 'translate3d(0,' + item.top + 'px,0)', opacity: +!!item.height}"
+        v-for="(item, index) in items" v-if="index >= start - size && index < start + size">
         <slot name="item" :data="item.data" :index="index"></slot>
-      </div>
-      <div class="vue-recyclist-item vue-recyclist-tomb" v-for="t in size" v-if="tombstone">
-        <slot name="tombstone"></slot>
-      </div>
-      <div :ref="'item'+index" class="vue-recyclist-item" :style="{top: '-10000px'}" v-for="(item, index) in items" v-if="!item.height && !item.top">
-        <slot name="item" :data="item.data"></slot>
-      </div>
     </div>
+    <div :ref="'item'+index" class="vue-recyclist-item" :style="{transform: 'translate3d(0,-10000px,0)'}" v-for="(item, index) in items"
+      v-if="!item.height && !item.top">
+      <slot name="item" :data="item.data"></slot>
+  </div>
+  </div>
 
-    <div class="vue-recyclist-loading" v-show="loading && !nomore">
-      <slot name="loading">
-        <div class="vue-recyclist-loading-content">
-          <div class="cssloading-circle spinner"></div>
-        </div>
-      </slot>
-    </div>
+  <div class="vue-recyclist-loading" v-show="loading && !nomore && !tombstone">
+    <slot name="loading">
+      <div class="vue-recyclist-loading-content">
+        <div class="cssloading-circle spinner"></div>
+      </div>
+    </slot>
+  </div>
 
-    <div class="vue-recyclist-nomore" v-show="nomore && !loading">
-      <slot name="nomore">
-        <div>End of list</div>
-      </slot>
-    </div>
+  <div class="vue-recyclist-nomore" v-show="nomore && !loading">
+    <slot name="nomore">
+      <div>End of list</div>
+    </slot>
+  </div>
+
   </div>
 </template>
 <script>
@@ -36,6 +38,7 @@
       return {
         name: 'VueRecyclist',
         items: [], // Wrapped full list items
+        tombHeight: 0, // Tombstone height
         height: 0, // Full list height
         top: 0, // Full list scrollTop
         start: 0 // Visible items start index
@@ -56,11 +59,7 @@
       },
       offset: {
         type: Number,
-        default: 500 // The number of pixels of additional length to allow scrolling to.
-      },
-      duration: {
-        type: Number,
-        default: 200 // The animation interval (in ms) for fading in content from tombstones.
+        default: 200 // The number of pixels of additional length to allow scrolling to.
       },
       loadinit: {
         type: Function, // The function of loading init items.
@@ -103,6 +102,12 @@
           Promise.all(loads).then(() => {
             this.fillList()
           })
+        } else {
+          // when removing items from list, reset list
+          this.items = []
+          this.height = this.top = this.start = 0
+          this.$el.scrollTop = 0
+          this.updateHeight()
         }
       }
     },
@@ -110,13 +115,34 @@
       this.$el.addEventListener('scroll', this.onScroll.bind(this))
       window.addEventListener('resize', this.onResize.bind(this))
       this.loadinit()
+      this.fillTomb()
     },
     methods: {
+      fillTomb() {
+        // add tombs on empty page
+        if (this.tombstone) {
+          this.$nextTick(() => {
+            this.tombHeight = this.$refs.tomb[0] && this.$refs.tomb[0].offsetHeight
+          })
+        }
+      },
       fillList() {
         // fullfill list if current list height is less than container height
         if (this.height < this.$el.offsetHeight) {
           this.loadmore()
         }
+      },
+      tombStyle(index) {
+        // get tombs style
+        let lastItem = this.items.length ? this.items[this.items.length - 1] : null
+        let itemsHeight = lastItem ? lastItem.top + lastItem.height : 0
+        return {
+          transform: 'translate3d(0,' + (Math.min(this.height, itemsHeight) + index * this.tombHeight) + 'px,0)'
+        }
+      },
+      updateHeight() {
+        // update list height
+        this.$refs.list.style.height = this.height + 'px'
       },
       updateItem(index) {
         if (this.$refs['item' + index][0]) {
@@ -131,7 +157,7 @@
             this.height += this.items[i].height
           }
           // update list height
-          this.$refs.list.style.height = this.height + 'px'
+          this.updateHeight()
         }
       },
       updateIndex() {
@@ -155,11 +181,14 @@
         }
       },
       onScroll() {
-        let top = this.$el.scrollTop
-        let ch = this.$el.offsetHeight
-        let sh = this.$el.scrollHeight
-        if (top + ch > sh - this.offset && !this.loading) {
-          this.loadmore()
+        if (this.$el.scrollTop + this.$el.offsetHeight > this.height - this.offset) {
+          if (this.tombstone) {
+            this.height = this.height + this.tombHeight * this.size
+            this.updateHeight()
+            this.loadmore()
+          } else if (!this.loading) {
+            this.loadmore()
+          }
         }
         this.updateIndex()
       },
@@ -191,6 +220,7 @@
 </script>
 <style src="./cssloading.css"></style>
 <style lang="scss" scoped>
+  $duration: 500ms;
   .vue-recyclist {
     overflow-x: hidden;
     overflow-y: auto;
@@ -199,14 +229,22 @@
       position: relative;
       margin: 0;
       padding: 0;
+      .vue-recyclist-fix {
+        height: 1px;
+        margin-top: -1px;
+        opacity: 0;
+        overflow: hidden;
+      }
       .vue-recyclist-item {
         position: absolute;
-        opacity: 1;
+        opacity: 0;
         z-index: 1;
+        transition-property: opacity;
+        transition-duration: $duration;
         &.vue-recyclist-tomb {
           opacity: 1;
           z-index: 0;
-          top: -10000px;
+          transition-duration: 0ms;
         }
       }
     }

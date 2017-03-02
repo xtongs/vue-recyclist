@@ -3,9 +3,10 @@
     <header>
       <h1>VueRecyclist</h1>
       <h2>Infinite scroll list for Vue.js with DOM recycling. <a href="https://github.com/xtongs/vue-recyclist">Github</a></h2>
+      <a @click="tombstone = !tombstone">{{ tombstone ? 'hide' : 'show'}} tombstones</a>
     </header>
-    <vue-recyclist class="list" :list="list" :tombstone="tombstone" :size="size" :duration="duration" :offset="offset" :loadinit="loadInit"
-      :loadmore="loadItems" :loading="loading" :nomore="nomore">
+    <vue-recyclist class="list" :list="list" :tombstone="tombstone" :size="size" :offset="offset" :loadinit="loadInit" :loadmore="loadItems"
+      :loading="loading" :nomore="nomore">
       <template slot="tombstone" scope="props">
         <div class="item tombstone">
           <img class="avatar" src="./images/unknown.jpg" />
@@ -52,10 +53,9 @@
         num: 10,
         // list
         list: [],
-        tombstone: true,
+        tombstone: !!+localStorage['tombstone'],
         size: this.num,
-        duration: 200,
-        offset: 500,
+        offset: 0,
         loading: false,
         nomore: false
       }
@@ -63,8 +63,11 @@
     components: {
       'vue-recyclist': VueRecyclist
     },
-    mounted() {
-
+    watch: {
+      tombstone(val) {
+        localStorage['tombstone'] = +val
+        this.loadInit()
+      }
     },
     methods: {
       getItem(id) {
@@ -78,6 +81,7 @@
         }
       },
       loadInit() {
+        this.list.length = 0
         this.list = []
         this.id = 0
         this.loadItems()
@@ -148,6 +152,11 @@
           a {
             color: inherit;
           }
+        }
+        a {
+          font-size: 12px;
+          text-decoration: underline;
+          margin-top: 10px;
         }
       }
       .info {
