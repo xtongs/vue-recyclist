@@ -1,35 +1,42 @@
 <template>
   <div class="vue-recyclist">
-    <div ref="list" class="vue-recyclist-items">
+    <div ref="list" class="vue-recyclist-items" :style="{height: height + 'px'}">
       <!--Fix iOS scrolling touch problem caused by transform-->
       <div class="vue-recyclist-fix"></div>
-      <div ref="tomb" class="vue-recyclist-item vue-recyclist-tomb" v-for="t in size * 2" v-if="tombstone" :style="tombStyle(t-1)">
+
+      <div v-for="(item, index) in items" v-if="index >= start - size * 2 && index < start + size * 2"
+        class="vue-recyclist-item" :class="{'vue-recyclist-transition': tombstone && !item.tomb}"
+        :style="{transform: 'translate3d(0,' + item.top + 'px,0)'}">
+        <slot v-if="!item.tomb" name="item" :data="item.data" :index="index"></slot>
+        <slot v-else-if="tombstone" name="tombstone"></slot>
+      </div>
+
+      <!--get tombstone and item heights from these invisible doms-->
+      <div ref="tomb" class="vue-recyclist-item vue-recyclist-invisible">
         <slot name="tombstone"></slot>
       </div>
-      <div ref="item" class="vue-recyclist-item" :style="{transform: 'translate3d(0,' + item.top + 'px,0)', opacity: +!!item.height}"
-        v-for="(item, index) in items" v-if="index >= start - size && index < start + size">
-        <slot name="item" :data="item.data" :index="index"></slot>
-    </div>
-    <div :ref="'item'+index" class="vue-recyclist-item" :style="{transform: 'translate3d(0,-10000px,0)'}" v-for="(item, index) in items"
-      v-if="!item.height && !item.top">
-      <slot name="item" :data="item.data"></slot>
-  </div>
-  </div>
-
-  <div class="vue-recyclist-loading" v-show="loading && !nomore && !tombstone">
-    <slot name="loading">
-      <div class="vue-recyclist-loading-content">
-        <div class="cssloading-circle spinner"></div>
+      <div :ref="'item'+index" v-for="(item, index) in items" v-if="!item.tomb && !item.height"
+        class="vue-recyclist-item vue-recyclist-invisible">
+        <slot name="item" :data="item.data"></slot>
       </div>
-    </slot>
-  </div>
+    </div>
 
-  <div class="vue-recyclist-nomore" v-show="nomore && !loading">
-    <slot name="nomore">
-      <div>End of list</div>
-    </slot>
-  </div>
+    <div v-show="spinner && !nomore && !tombstone"
+      class="vue-recyclist-loading"
+      :style="{visibility: loading ? 'visible' : 'hidden'}">
+      <slot name="spinner">
+        <div class="vue-recyclist-loading-content">
+          <div class="cssloading-circle spinner"></div>
+        </div>
+      </slot>
+    </div>
 
+    <div v-show="nomore && !loading"
+      class="vue-recyclist-nomore">
+      <slot name="nomore">
+        <div>End of list</div>
+      </slot>
+    </div>
   </div>
 </template>
 <script>
@@ -38,10 +45,17 @@
       return {
         name: 'VueRecyclist',
         items: [], // Wrapped full list items
-        tombHeight: 0, // Tombstone height
         height: 0, // Full list height
         top: 0, // Full list scrollTop
         start: 0 // Visible items start index
+      }
+    },
+    computed: {
+      containerHeight() {
+        return this.$el && this.$el.offsetHeight || 0
+      },
+      tombHeight() {
+        return this.tombstone ? this.$refs.tomb && this.$refs.tomb.offsetHeight : 0
       }
     },
     props: {
@@ -55,23 +69,23 @@
       },
       size: {
         type: Number,
-        default: 10 // The number of items on one page.
+        default: 10 // The number of items added each time.
       },
       offset: {
         type: Number,
         default: 200 // The number of pixels of additional length to allow scrolling to.
-      },
-      loadinit: {
-        type: Function, // The function of loading init items.
-        required: true
       },
       loadmore: {
         type: Function, // The function of loading more items.
         required: true
       },
       loading: {
+        type: Boolean, // Loading status
+        default: false
+      },
+      spinner: {
         type: Boolean,
-        default: true // Whether to show loading status.
+        default: true // Whether to show loading spinner.
       },
       nomore: {
         type: Boolean,
@@ -80,84 +94,89 @@
     },
     watch: {
       list(val) {
-        if (val.length > this.items.length) {
-          let loads = []
-          // only push newly added items
-          for (let i = this.items.length; i < this.list.length; i++) {
-            this.items.push({
-              data: this.list[i],
-              height: 0,
-              top: 0
-            })
-            // remember last scrolltop
-            this.top = this.$el.scrollTop
-            // update full list height and newly added items position
-            loads.push(this.$nextTick().then(() => {
-              this.updateItem(i)
-              // restore list scrolltop
-              this.$el.scrollTop = this.top
-            }))
-          }
-          // fill list
-          Promise.all(loads).then(() => {
-            this.fillList()
-          })
+        if (val.length) {
+          this.load()
         } else {
-          // when removing items from list, reset list
-          this.items = []
-          this.height = this.top = this.start = 0
-          this.$el.scrollTop = 0
-          this.updateHeight()
+          this.init()
         }
+      },
+      start() {
+        // this.loadItems()
       }
     },
     mounted() {
       this.$el.addEventListener('scroll', this.onScroll.bind(this))
       window.addEventListener('resize', this.onResize.bind(this))
-      this.loadinit()
-      this.fillTomb()
+      this.init()
     },
     methods: {
-      fillTomb() {
-        // add tombs on empty page
-        if (this.tombstone) {
-          this.$nextTick(() => {
-            this.tombHeight = this.$refs.tomb[0] && this.$refs.tomb[0].offsetHeight
-          })
-        }
+      init() {
+        // init
+        this.reset()
+        this.load()
       },
-      fillList() {
-        // fullfill list if current list height is less than container height
-        if (this.height < this.$el.offsetHeight) {
-          this.loadmore()
-        }
+      reset() {
+        // reset list
+        this.items = []
+        this.height = this.top = this.start = 0
+        this.$el.scrollTop = 0
+        this.updateHeight()
       },
-      tombStyle(index) {
-        // get tombs style
-        let lastItem = this.items.length ? this.items[this.items.length - 1] : null
-        let itemsHeight = lastItem ? lastItem.top + lastItem.height : 0
-        return {
-          transform: 'translate3d(0,' + (Math.min(this.height, itemsHeight) + index * this.tombHeight) + 'px,0)'
+      load() {
+        for (let i = this.start; i < this.start + this.size; i++) {
+          if (!this.list[i]) {
+            this.loadmore()
+            break
+          }
         }
+
+        let loads = []
+        for (let i = this.start; i < this.start + this.size; i++) {
+          this.setItem(i, this.list[i] || null)
+          // update full list height and newly added items position
+          loads.push(this.$nextTick().then(() => {
+            this.updateItem(i)
+          }))
+        }
+
+        // fill list
+        Promise.all(loads).then(() => {
+          this.updateHeight()
+        })
       },
-      updateHeight() {
-        // update list height
-        this.$refs.list.style.height = this.height + 'px'
+      setItem(index, data) {
+        this.$set(this.items, index, {
+          data: data ? data : null,
+          height: 0,
+          top: this.top + this.height,
+          tomb: !data,
+          loaded: !!data
+        })
+        this.updateItem(index)
       },
       updateItem(index) {
-        if (this.$refs['item' + index][0]) {
+        let cur = this.items[index]
+        let pre = this.items[index - 1]
+        let dom = this.$refs['item' + index]
+        if (dom && dom[0]) {
           // set current item height and top
-          this.items[index].height = this.$refs['item' + index][0].offsetHeight
-          // loop all items to update list height
-          this.height = 0
-          for (let i = 0; i < this.items.length; i++) {
-            if (i < index) {
-              this.items[index].top += this.items[i].height
-            }
-            this.height += this.items[i].height
-          }
-          // update list height
-          this.updateHeight()
+          cur.height = dom[0].offsetHeight
+        } else {
+          // item is tombstone
+          cur.height = this.tombHeight
+        }
+        cur.top = pre ? pre.top + pre.height : 0
+      },
+      updateHeight() {
+        // loop all items to update list height
+        this.height = 0
+        this.acturalHeight = 0
+        for (let i = 0; i < this.items.length; i++) {
+          this.height += this.items[i].height
+          this.acturalHeight += this.items[i].tomb ? 0 : this.items[i].height
+        }
+        if (this.acturalHeight < this.$el.offsetHeight) {
+          // this.load()
         }
       },
       updateIndex() {
@@ -183,9 +202,7 @@
       onScroll() {
         if (this.$el.scrollTop + this.$el.offsetHeight > this.height - this.offset) {
           if (this.tombstone) {
-            this.height = this.height + this.tombHeight * this.size
-            this.updateHeight()
-            this.loadmore()
+            this.load()
           } else if (!this.loading) {
             this.loadmore()
           }
@@ -209,6 +226,7 @@
             this.$el.scrollTop = this.items[index].top - offset
           })
         })
+        this.updateHeight()
       }
     },
     destroyed() {
@@ -232,19 +250,18 @@
       .vue-recyclist-fix {
         height: 1px;
         margin-top: -1px;
-        opacity: 0;
         overflow: hidden;
       }
       .vue-recyclist-item {
         position: absolute;
-        opacity: 0;
         z-index: 1;
-        transition-property: opacity;
-        transition-duration: $duration;
-        &.vue-recyclist-tomb {
-          opacity: 1;
-          z-index: 0;
-          transition-duration: 0ms;
+        &.vue-recyclist-transition {
+          transition-property: all;
+          transition-duration: $duration;
+        }
+        &.vue-recyclist-invisible {
+          transform: translate3d(0, -10000px, 0);
+          visibility: hidden;
         }
       }
     }

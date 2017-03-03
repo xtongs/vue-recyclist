@@ -5,8 +5,8 @@
       <h2>Infinite scroll list for Vue.js with DOM recycling. <a href="https://github.com/xtongs/vue-recyclist">Github</a></h2>
       <a @click="tombstone = !tombstone">{{ tombstone ? 'hide' : 'show'}} tombstones</a>
     </header>
-    <vue-recyclist class="list" :list="list" :tombstone="tombstone" :size="size" :offset="offset" :loadinit="loadInit" :loadmore="loadItems"
-      :loading="loading" :nomore="nomore">
+    <vue-recyclist class="list" :list="list" :tombstone="tombstone" :size="size" :offset="offset" :loadmore="loadItems" :loading="loading"
+      :spinner="spinner" :nomore="nomore">
       <template slot="tombstone" scope="props">
         <div class="item tombstone">
           <img class="avatar" src="./images/unknown.jpg" />
@@ -33,7 +33,7 @@
         </div>
       </template>
 
-      <!--<div slot="loading">Loading Data</div>-->
+      <!--<div slot="spinner">Loading Data</div>-->
       <!--<div slot="nomore">No More Data</div>-->
       </vue-recyclist>
       <p class="info">Inspired by <a href="https://developers.google.com/web/updates/2016/07/infinite-scroller">Complexities of an Infinite Scroller</a></p>
@@ -57,6 +57,7 @@
         size: this.num,
         offset: 0,
         loading: false,
+        spinner: true,
         nomore: false
       }
     },
@@ -66,7 +67,9 @@
     watch: {
       tombstone(val) {
         localStorage['tombstone'] = +val
-        this.loadInit()
+        this.id = 0
+        this.list = []
+        this.loadItems()
       }
     },
     methods: {
@@ -80,15 +83,9 @@
           time: new Date(Math.floor(this.initTime + id * this.num * 1000 + Math.random() * this.num * 1000)).toString(),
         }
       },
-      loadInit() {
-        this.list.length = 0
-        this.list = []
-        this.id = 0
-        this.loadItems()
-      },
       loadItems() {
-        this.loading = true
         let items = []
+        this.loading = true
         setTimeout(() => {
           for (let i = 0; i < this.num; i++) {
             items.push(this.getItem(this.id++))
