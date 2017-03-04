@@ -27,7 +27,7 @@
       </template>
 
       <template slot="item" scope="props">
-        <div class="item" @click="itemClicked(props)">
+        <div :id="props.data.id" class="item" @click="itemClicked(props)">
           <img class="avatar" :src="props.data.avatar" />
           <div class="bubble">
             <p>{{ props.data.msg }}</p>
@@ -60,7 +60,7 @@
         list: [],
         tombstone: !!+localStorage['tombstone'],
         size: this.num,
-        offset: 0,
+        offset: 200,
         spinner: true,
         nomore: false
       }

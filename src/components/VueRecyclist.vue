@@ -1,12 +1,9 @@
 <template>
   <div class="vue-recyclist">
     <div ref="list" class="vue-recyclist-items" :style="{height: height + 'px'}">
-      <!--Fix iOS scrolling touch problem caused by transform-->
-      <div class="vue-recyclist-fix"></div>
-
       <div v-for="(item, index) in items" v-if="index >= start - size && index < start + size"
         class="vue-recyclist-item" :class="{'vue-recyclist-transition': tombstone && !item.tomb}"
-        :style="{transform: 'translate3d(0,' + item.top + 'px,0)'}">
+        :style="{top: item.top + 'px'}">
         <slot v-if="!item.tomb" name="item" :data="item.data" :index="index"></slot>
         <slot v-else-if="tombstone" name="tombstone"></slot>
       </div>
@@ -186,24 +183,15 @@
         if (this.startOffset) {
           this.$el.scrollTop = this.items[this.start].top - this.startOffset
         }
+        this.updateIndex()
       },
       updateIndex() {
         // update visible items start index
         let top = this.$el.scrollTop
-        let s = this.start
-        if (this.items[s]) {
-          if (this.items[s].top < top) {
-            for (let i = s + 1; i < this.items.length; i++) {
-              if (this.items[i] && this.items[i].top <= top) {
-                this.start++
-              }
-            }
-          } else {
-            for (let i = s; i > 0; i--) {
-              if (this.items[i].top > top) {
-                this.start--
-              }
-            }
+        for (let i = 0; i < this.items.length; i++) {
+          if (this.items[i].top > top) {
+            this.start = Math.max(0, i - 1)
+            break
           }
         }
       },
@@ -213,7 +201,7 @@
           if (this.tombstone) {
             this.items.length += this.size
             this.loadItems()
-          } else {
+          } else if (!this.loading) {
             this.loading = true
             this.loadmore()
           }
@@ -246,10 +234,9 @@
       position: relative;
       margin: 0;
       padding: 0;
-      .vue-recyclist-fix {
-        height: 1px;
-        margin-top: -1px;
-        overflow: hidden;
+      .vue-recyclist-invisible {
+        top: -100px;
+        visibility: hidden;
       }
       .vue-recyclist-item {
         position: absolute;
@@ -257,10 +244,6 @@
         &.vue-recyclist-transition {
           transition-property: all;
           transition-duration: $duration;
-        }
-        &.vue-recyclist-invisible {
-          transform: translate3d(0, -10000px, 0);
-          visibility: hidden;
         }
       }
     }
