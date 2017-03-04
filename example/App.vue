@@ -5,10 +5,16 @@
       <h2>Infinite scroll list for Vue.js with DOM recycling. <a href="https://github.com/xtongs/vue-recyclist">Github</a></h2>
       <a @click="tombstone = !tombstone">{{ tombstone ? 'hide' : 'show'}} tombstones</a>
     </header>
+    <div ref="avatars" style="display:none">
+      <img src="./images/avatar0.jpg"/>
+      <img src="./images/avatar1.jpg"/>
+      <img src="./images/avatar2.jpg"/>
+      <img src="./images/avatar3.jpg"/>
+    </div>
     <vue-recyclist class="list" :list="list" :tombstone="tombstone" :size="size" :offset="offset"       :loadmore="loadItems" :spinner="spinner" :nomore="nomore">
       <template slot="tombstone" scope="props">
         <div class="item tombstone">
-          <img class="avatar" src="./images/unknown.svg" />
+          <img class="avatar" src="./images/unknown.jpg" />
           <div class="bubble">
             <p></p>
             <p></p>
@@ -32,10 +38,10 @@
         </div>
       </template>
 
-      <!--<div slot="spinner">Loading Data</div>-->
-      <!--<div slot="nomore">No More Data</div>-->
-      </vue-recyclist>
-      <p class="info">Inspired by <a href="https://developers.google.com/web/updates/2016/07/infinite-scroller">Complexities of an Infinite Scroller</a></p>
+    <!--<div slot="spinner">Loading Data</div>-->
+    <!--<div slot="nomore">No More Data</div>-->
+    </vue-recyclist>
+    <p class="info">Inspired by <a href="https://developers.google.com/web/updates/2016/07/infinite-scroller">Complexities of an Infinite Scroller</a></p>
   </div>
 </template>
 
@@ -76,7 +82,7 @@
         const msg = Data.messages[Math.floor(Math.random() * Data.messages.length)]
         return {
           id: 10000 + id,
-          avatar: './images/avatar' + avatar + '.svg',
+          avatar: this.$refs.avatars.children[avatar].src,
           msg: msg,
           time: new Date(Math.floor(this.initTime + id * this.num * 1000 + Math.random() * this.num * 1000)).toString(),
         }

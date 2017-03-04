@@ -1,5 +1,5 @@
 const data = {
-  avatars: 7,
+  avatars: 4,
   messages: [
     "when you popState and actually being well, we expect it further",
     "But I'm going to take care of ripping out my code in the fact that just something like that",
