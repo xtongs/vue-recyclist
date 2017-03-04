@@ -4,20 +4,20 @@
       <!--Fix iOS scrolling touch problem caused by transform-->
       <div class="vue-recyclist-fix"></div>
 
-      <div v-for="(item, index) in items" v-if="index >= start - size * 2 && index < start + size * 2"
+      <div v-for="(item, index) in items" v-if="index >= start - size && index < start + size"
         class="vue-recyclist-item" :class="{'vue-recyclist-transition': tombstone && !item.tomb}"
         :style="{transform: 'translate3d(0,' + item.top + 'px,0)'}">
         <slot v-if="!item.tomb" name="item" :data="item.data" :index="index"></slot>
         <slot v-else-if="tombstone" name="tombstone"></slot>
       </div>
 
-      <!--get tombstone and item heights from these invisible doms-->
-      <div ref="tomb" class="vue-recyclist-item vue-recyclist-invisible">
-        <slot name="tombstone"></slot>
-      </div>
       <div :ref="'item'+index" v-for="(item, index) in items" v-if="!item.tomb && !item.height"
         class="vue-recyclist-item vue-recyclist-invisible">
         <slot name="item" :data="item.data"></slot>
+      </div>
+      <!--get tombstone and item heights from these invisible doms-->
+      <div ref="tomb" class="vue-recyclist-item vue-recyclist-invisible">
+        <slot name="tombstone"></slot>
       </div>
     </div>
 
@@ -46,8 +46,10 @@
         name: 'VueRecyclist',
         items: [], // Wrapped full list items
         height: 0, // Full list height
-        top: 0, // Full list scrollTop
-        start: 0 // Visible items start index
+        acturalHeight: 0, // Full list actural height
+        loading: false, // Loading status
+        start: 0, // Visible items start index
+        startOffset: 0 // Start item scroll top offset
       }
     },
     computed: {
@@ -79,10 +81,6 @@
         type: Function, // The function of loading more items.
         required: true
       },
-      loading: {
-        type: Boolean, // Loading status
-        default: false
-      },
       spinner: {
         type: Boolean,
         default: true // Whether to show loading spinner.
@@ -93,15 +91,19 @@
       }
     },
     watch: {
-      list(val) {
-        if (val.length) {
-          this.load()
+      list(arr) {
+        if (arr.length) {
+          this.loading = false
+          this.loadItems()
         } else {
           this.init()
         }
       },
-      start() {
-        // this.loadItems()
+      items(arr) {
+        if (arr.length > this.list.length) {
+          this.loading = true
+          this.loadmore()
+        }
       }
     },
     mounted() {
@@ -120,28 +122,35 @@
         this.items = []
         this.height = this.top = this.start = 0
         this.$el.scrollTop = 0
-        this.updateHeight()
+        this.updateItemTop()
       },
       load() {
-        for (let i = this.start; i < this.start + this.size; i++) {
-          if (!this.list[i]) {
-            this.loadmore()
-            break
-          }
+        if (this.tombstone) {
+          this.items.length += this.size
+          this.loadItems()
+        } else {
+          this.loading = true
+          this.loadmore()
         }
-
+      },
+      loadItems() {
         let loads = []
-        for (let i = this.start; i < this.start + this.size; i++) {
+        let start = 0
+        let end = this.tombstone ? this.items.length : this.list.length
+        for (let i = start; i < end; i++) {
+          if (this.items[i] && this.items[i].loaded) {
+            continue
+          }
           this.setItem(i, this.list[i] || null)
           // update full list height and newly added items position
           loads.push(this.$nextTick().then(() => {
-            this.updateItem(i)
+            this.updateItemHeight(i)
           }))
         }
 
         // fill list
         Promise.all(loads).then(() => {
-          this.updateHeight()
+          this.updateItemTop()
         })
       },
       setItem(index, data) {
@@ -152,11 +161,10 @@
           tomb: !data,
           loaded: !!data
         })
-        this.updateItem(index)
       },
-      updateItem(index) {
+      updateItemHeight(index) {
+        // update item height
         let cur = this.items[index]
-        let pre = this.items[index - 1]
         let dom = this.$refs['item' + index]
         if (dom && dom[0]) {
           // set current item height and top
@@ -165,18 +173,18 @@
           // item is tombstone
           cur.height = this.tombHeight
         }
-        cur.top = pre ? pre.top + pre.height : 0
       },
-      updateHeight() {
-        // loop all items to update list height
-        this.height = 0
-        this.acturalHeight = 0
+      updateItemTop() {
+        // loop all items to update item top and list height
+        this.height = this.acturalHeight = 0
         for (let i = 0; i < this.items.length; i++) {
+          let pre = this.items[i - 1]
+          this.items[i].top = pre ? pre.top + pre.height : 0
           this.height += this.items[i].height
           this.acturalHeight += this.items[i].tomb ? 0 : this.items[i].height
         }
-        if (this.acturalHeight < this.$el.offsetHeight) {
-          // this.load()
+        if (this.startOffset) {
+          this.$el.scrollTop = this.items[this.start].top - this.startOffset
         }
       },
       updateIndex() {
@@ -200,33 +208,24 @@
         }
       },
       onScroll() {
+        this.startOffset = 0
         if (this.$el.scrollTop + this.$el.offsetHeight > this.height - this.offset) {
           if (this.tombstone) {
-            this.load()
-          } else if (!this.loading) {
+            this.items.length += this.size
+            this.loadItems()
+          } else {
+            this.loading = true
             this.loadmore()
           }
         }
         this.updateIndex()
       },
       onResize() {
-        // remember last scrolltop, index and top of anchor item
-        let top = this.$el.scrollTop
-        let offset, index
-        this.items.forEach((item, i) => {
-          if (item.top > top && offset === undefined) {
-            offset = item.top - top
-            index = i
-          }
-          // reset item height and top
-          item.height = item.top = 0
-          this.$nextTick(() => {
-            // recaculate item height and top then restore list scrolltop
-            this.updateItem(i)
-            this.$el.scrollTop = this.items[index].top - offset
-          })
+        this.startOffset = this.items[this.start].top - this.$el.scrollTop
+        this.items.forEach((item) => {
+          item.loaded = false
         })
-        this.updateHeight()
+        this.loadItems()
       }
     },
     destroyed() {

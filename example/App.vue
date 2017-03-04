@@ -5,11 +5,10 @@
       <h2>Infinite scroll list for Vue.js with DOM recycling. <a href="https://github.com/xtongs/vue-recyclist">Github</a></h2>
       <a @click="tombstone = !tombstone">{{ tombstone ? 'hide' : 'show'}} tombstones</a>
     </header>
-    <vue-recyclist class="list" :list="list" :tombstone="tombstone" :size="size" :offset="offset" :loadmore="loadItems" :loading="loading"
-      :spinner="spinner" :nomore="nomore">
+    <vue-recyclist class="list" :list="list" :tombstone="tombstone" :size="size" :offset="offset"       :loadmore="loadItems" :spinner="spinner" :nomore="nomore">
       <template slot="tombstone" scope="props">
         <div class="item tombstone">
-          <img class="avatar" src="./images/unknown.jpg" />
+          <img class="avatar" src="./images/unknown.svg" />
           <div class="bubble">
             <p></p>
             <p></p>
@@ -56,7 +55,6 @@
         tombstone: !!+localStorage['tombstone'],
         size: this.num,
         offset: 0,
-        loading: false,
         spinner: true,
         nomore: false
       }
@@ -78,20 +76,18 @@
         const msg = Data.messages[Math.floor(Math.random() * Data.messages.length)]
         return {
           id: 10000 + id,
-          avatar: './images/avatar' + avatar + '.jpg',
+          avatar: './images/avatar' + avatar + '.svg',
           msg: msg,
           time: new Date(Math.floor(this.initTime + id * this.num * 1000 + Math.random() * this.num * 1000)).toString(),
         }
       },
       loadItems() {
         let items = []
-        this.loading = true
         setTimeout(() => {
           for (let i = 0; i < this.num; i++) {
             items.push(this.getItem(this.id++))
           }
           this.list = this.list.concat(items)
-          this.loading = false
         }, 1000)
       },
       itemClicked(props) {
