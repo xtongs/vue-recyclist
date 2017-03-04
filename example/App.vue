@@ -156,6 +156,7 @@
           font-size: 12px;
           text-decoration: underline;
           margin-top: 10px;
+          cursor: pointer;
         }
       }
       .info {
