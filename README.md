@@ -82,15 +82,16 @@ export default {
 ```
 
 ## Options
-| Directive     | Type      | Default/Required  | |
-| ------------- | ----------| -------- | - |
-| list          | Array     | required | List of items |
-| tombstone     | Boolean   | false    | Whether to show tombstones |
-| size          | Number    | 10       | The number of items added each time |
-| offset        | Number    | 200      | The number of pixels of additional length to allow scrolling to |
-| loadmore      | Function  | required | The function of loading more items |
-| spinner       | Boolean   | true     | Whether to show loading spinner |
-| nomore        | Boolean   | false    | Whether to show 'no more data' status bar |
+
+| Directive | Type     | Default  |                                                                 |
+| --------- | ---------| -------- | --------------------------------------------------------------- |
+| list      | Array    | required | List of items                                                   |
+| tombstone | Boolean  | false    | Whether to show tombstones                                      |
+| size      | Number   | 10       | The number of items added each time                             |
+| offset    | Number   | 200      | The number of pixels of additional length to allow scrolling to |
+| loadmore  | Function | required | The function of loading more items                              |
+| spinner   | Boolean  | true     | Whether to show loading spinner                                 |
+| nomore    | Boolean  | false    | Whether to show 'no more data' status bar                       |
 
 ## Development
 
