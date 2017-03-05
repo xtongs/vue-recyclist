@@ -1,7 +1,7 @@
 {
   "name": "vue-recyclist",
   "description": "Infinite scroll plugin for Vue.js with DOM recycling.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist/vue-recyclist.js",
   "author": "Tong <xtongs@gmail.com>",
   "files": [

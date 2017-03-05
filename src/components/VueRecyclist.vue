@@ -2,7 +2,7 @@
   <div class="vue-recyclist">
     <div ref="list" class="vue-recyclist-items" :style="{height: height + 'px'}">
       <div v-for="(item, index) in items" v-if="index >= start - size && index < start + size"
-        class="vue-recyclist-item" :class="{'vue-recyclist-transition': tombstone && !item.tomb}"
+        class="vue-recyclist-item" :class="{'vue-recyclist-transition': tombstone && loaded}"
         :style="{top: item.top + 'px'}">
         <slot v-if="!item.tomb" name="item" :data="item.data" :index="index"></slot>
         <slot v-else-if="tombstone" name="tombstone"></slot>
@@ -41,9 +41,9 @@
     data() {
       return {
         name: 'VueRecyclist',
+        loaded: false, // First Loaded
         items: [], // Wrapped full list items
         height: 0, // Full list height
-        acturalHeight: 0, // Full list actural height
         loading: false, // Loading status
         start: 0, // Visible items start index
         startOffset: 0 // Start item scroll top offset
@@ -60,7 +60,7 @@
     props: {
       list: {
         type: Array,
-        default: () => []
+        required: true
       },
       tombstone: {
         type: Boolean,
@@ -84,12 +84,13 @@
       },
       nomore: {
         type: Boolean,
-        default: false // Whether to show nomore status.
+        default: false // Whether to show 'no more data' status bar
       }
     },
     watch: {
       list(arr) {
         if (arr.length) {
+          this.loaded = true
           this.loading = false
           this.loadItems()
         } else {
@@ -98,8 +99,7 @@
       },
       items(arr) {
         if (arr.length > this.list.length) {
-          this.loading = true
-          this.loadmore()
+          this.getItems()
         }
       }
     },
@@ -111,6 +111,7 @@
     methods: {
       init() {
         // init
+        this.loaded = false
         this.reset()
         this.load()
       },
@@ -119,16 +120,18 @@
         this.items = []
         this.height = this.top = this.start = 0
         this.$el.scrollTop = 0
-        this.updateItemTop()
       },
       load() {
         if (this.tombstone) {
           this.items.length += this.size
           this.loadItems()
-        } else {
-          this.loading = true
-          this.loadmore()
+        } else if (!this.loading) {
+          this.getItems()
         }
+      },
+      getItems() {
+        this.loading = true
+        this.loadmore()
       },
       loadItems() {
         let loads = []
@@ -139,13 +142,12 @@
             continue
           }
           this.setItem(i, this.list[i] || null)
-          // update full list height and newly added items position
+          // update newly added items position
           loads.push(this.$nextTick().then(() => {
             this.updateItemHeight(i)
           }))
         }
-
-        // fill list
+        // update items top and full list height
         Promise.all(loads).then(() => {
           this.updateItemTop()
         })
@@ -173,13 +175,13 @@
       },
       updateItemTop() {
         // loop all items to update item top and list height
-        this.height = this.acturalHeight = 0
+        this.height = 0
         for (let i = 0; i < this.items.length; i++) {
           let pre = this.items[i - 1]
           this.items[i].top = pre ? pre.top + pre.height : 0
           this.height += this.items[i].height
-          this.acturalHeight += this.items[i].tomb ? 0 : this.items[i].height
         }
+        // update scroll top when needed
         if (this.startOffset) {
           this.$el.scrollTop = this.items[this.start].top - this.startOffset
         }
@@ -198,13 +200,7 @@
       onScroll() {
         this.startOffset = 0
         if (this.$el.scrollTop + this.$el.offsetHeight > this.height - this.offset) {
-          if (this.tombstone) {
-            this.items.length += this.size
-            this.loadItems()
-          } else if (!this.loading) {
-            this.loading = true
-            this.loadmore()
-          }
+          this.load()
         }
         this.updateIndex()
       },

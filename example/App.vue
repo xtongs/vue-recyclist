@@ -11,7 +11,7 @@
       <img src="./images/avatar2.jpg"/>
       <img src="./images/avatar3.jpg"/>
     </div>
-    <vue-recyclist class="list" :list="list" :tombstone="tombstone" :size="size" :offset="offset"       :loadmore="loadItems" :spinner="spinner" :nomore="nomore">
+    <vue-recyclist class="list" :list="list" :tombstone="tombstone" :size="size" :offset="offset"       :loadmore="loadmore" :spinner="spinner" :nomore="nomore">
       <template slot="tombstone" scope="props">
         <div class="item tombstone">
           <img class="avatar" src="./images/unknown.jpg" />
@@ -73,7 +73,7 @@
         localStorage['tombstone'] = +val
         this.id = 0
         this.list = []
-        this.loadItems()
+        this.loadmore()
       }
     },
     methods: {
@@ -87,7 +87,7 @@
           time: new Date(Math.floor(this.initTime + id * this.num * 1000 + Math.random() * this.num * 1000)).toString(),
         }
       },
-      loadItems() {
+      loadmore() {
         let items = []
         setTimeout(() => {
           for (let i = 0; i < this.num; i++) {
