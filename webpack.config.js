@@ -9,7 +9,9 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, './example'),
     publicPath: process.env.NODE_ENV === 'production' ? './example/' : 'example/',
-    filename: '[name].js'
+    filename: '[name].js',
+    library: 'VueRecyclist',
+    libraryTarget: 'umd'
   },
   module: {
     rules: [
