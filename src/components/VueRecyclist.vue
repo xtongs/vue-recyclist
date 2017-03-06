@@ -2,17 +2,21 @@
   <div class="vue-recyclist">
     <div ref="list" class="vue-recyclist-items" :style="{height: height + 'px'}">
       <div v-for="(item, index) in items" v-if="index >= start - size && index < start + size"
-        class="vue-recyclist-item" :class="{'vue-recyclist-transition': tombstone && loaded}"
+        class="vue-recyclist-item"
         :style="{top: item.top + 'px'}">
-        <slot v-if="!item.tomb" name="item" :data="item.data" :index="index"></slot>
-        <slot v-else-if="tombstone" name="tombstone"></slot>
+        <div v-show="tombstone" :class="{'vue-recyclist-transition': tombstone}" :style="{opacity: +!item.loaded}">
+          <slot name="tombstone"></slot>
+        </div>
+        <div :class="{'vue-recyclist-transition': tombstone}" :style="{opacity: +item.loaded}">
+          <slot name="item" :data="item.data" :index="index"></slot>
+        </div>
       </div>
 
+      <!--get tombstone and item heights from these invisible doms-->
       <div :ref="'item'+index" v-for="(item, index) in items" v-if="!item.tomb && !item.height"
         class="vue-recyclist-item vue-recyclist-invisible">
         <slot name="item" :data="item.data"></slot>
       </div>
-      <!--get tombstone and item heights from these invisible doms-->
       <div ref="tomb" class="vue-recyclist-item vue-recyclist-invisible">
         <slot name="tombstone"></slot>
       </div>
@@ -41,12 +45,11 @@
     data() {
       return {
         name: 'VueRecyclist',
-        loaded: false, // First Loaded
         items: [], // Wrapped full list items
         height: 0, // Full list height
-        loading: false, // Loading status
+        loadings: [], // Loading status queue
         start: 0, // Visible items start index
-        startOffset: 0 // Start item scroll top offset
+        startOffset: 0 // Start item offset
       }
     },
     computed: {
@@ -55,6 +58,9 @@
       },
       tombHeight() {
         return this.tombstone ? this.$refs.tomb && this.$refs.tomb.offsetHeight : 0
+      },
+      loading() {
+        return this.loadings.length
       }
     },
     props: {
@@ -90,9 +96,10 @@
     watch: {
       list(arr) {
         if (arr.length) {
-          this.loaded = true
-          this.loading = false
-          this.loadItems()
+          this.loadings.pop()
+          if (!this.loading) {
+            this.loadItems()
+          }
         } else {
           this.init()
         }
@@ -110,13 +117,10 @@
     },
     methods: {
       init() {
-        // init
-        this.loaded = false
         this.reset()
         this.load()
       },
       reset() {
-        // reset list
         this.items = []
         this.height = this.top = this.start = 0
         this.$el.scrollTop = 0
@@ -130,7 +134,7 @@
         }
       },
       getItems() {
-        this.loading = true
+        this.loadings.push(1)
         this.loadmore()
       },
       loadItems() {
@@ -154,9 +158,9 @@
       },
       setItem(index, data) {
         this.$set(this.items, index, {
-          data: data ? data : null,
+          data: data ? data : {},
           height: 0,
-          top: this.top + this.height,
+          top: 0,
           tomb: !data,
           loaded: !!data
         })
@@ -166,7 +170,6 @@
         let cur = this.items[index]
         let dom = this.$refs['item' + index]
         if (dom && dom[0]) {
-          // set current item height and top
           cur.height = dom[0].offsetHeight
         } else {
           // item is tombstone
@@ -183,7 +186,7 @@
         }
         // update scroll top when needed
         if (this.startOffset) {
-          this.$el.scrollTop = this.items[this.start].top - this.startOffset
+          this.setScrollTop()
         }
         this.updateIndex()
       },
@@ -196,16 +199,22 @@
             break
           }
         }
+        this.getStartItemOffset()
+      },
+      getStartItemOffset() {
+        this.startOffset = this.items[this.start].top - this.$el.scrollTop
+      },
+      setScrollTop() {
+        this.$el.scrollTop = this.items[this.start].top - this.startOffset
       },
       onScroll() {
-        this.startOffset = 0
         if (this.$el.scrollTop + this.$el.offsetHeight > this.height - this.offset) {
           this.load()
         }
         this.updateIndex()
       },
       onResize() {
-        this.startOffset = this.items[this.start].top - this.$el.scrollTop
+        this.getStartItemOffset()
         this.items.forEach((item) => {
           item.loaded = false
         })
@@ -236,9 +245,11 @@
       }
       .vue-recyclist-item {
         position: absolute;
-        z-index: 1;
-        &.vue-recyclist-transition {
-          transition-property: all;
+        width: 100%;
+        .vue-recyclist-transition {
+          position: absolute;
+          opacity: 0;
+          transition-property: opacity;
           transition-duration: $duration;
         }
       }
