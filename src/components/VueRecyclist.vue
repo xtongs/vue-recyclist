@@ -3,7 +3,7 @@
     <div ref="list" class="vue-recyclist-items" :style="{height: height + 'px'}">
       <div v-for="(item, index) in items" v-if="index >= start - size && index < start + size"
         class="vue-recyclist-item"
-        :style="{top: item.top + 'px'}">
+        :style="{transform: 'translate3d(0,' + item.top + 'px,0)'}">
         <div v-show="tombstone" :class="{'vue-recyclist-transition': tombstone}" :style="{opacity: +!item.loaded}">
           <slot name="tombstone"></slot>
         </div>
@@ -189,6 +189,7 @@
           this.setScrollTop()
         }
         this.updateIndex()
+        this.makeScrollable()
       },
       updateIndex() {
         // update visible items start index
@@ -210,6 +211,10 @@
         if (this.items[this.start]) {
           this.$el.scrollTop = this.items[this.start].top - this.startOffset
         }
+      },
+      makeScrollable() {
+        // make ios -webkit-overflow-scrolling scrollable
+        this.$el.classList.add('vue-recyclist-scrollable')
       },
       onScroll() {
         if (this.$el.scrollTop + this.$el.offsetHeight > this.height - this.offset) {
@@ -238,7 +243,9 @@
   .vue-recyclist {
     overflow-x: hidden;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    &.vue-recyclist-scrollable {
+      -webkit-overflow-scrolling: touch;
+    }
     .vue-recyclist-items {
       position: relative;
       margin: 0;

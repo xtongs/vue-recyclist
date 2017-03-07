@@ -76,20 +76,7 @@
       }
     },
     created() {
-      let self = this
-      let stats = new Stats()
-      let domPanel = new Stats.Panel('D', '#0ff', '#002')
-      stats.addPanel(domPanel)
-      stats.showPanel(3)
-      document.body.appendChild(stats.dom)
-      setTimeout(function timeoutFunc() {
-        // Only update DOM node graph when we have time to spare to call
-        // numDomNodes(), which is a fairly expensive function.
-        requestIdleCallback(() => {
-          domPanel.update(self.numDomNodes(document.body), 1500)
-          setTimeout(timeoutFunc, 100)
-        })
-      }, 100)
+      this.addStatsPanel()
     },
     methods: {
       getItem(id) {
@@ -113,6 +100,24 @@
       },
       itemClicked(props) {
         console.log('Item:' + props.index, props.data)
+      },
+      addStatsPanel() {
+        if (window.requestIdleCallback) {
+          let self = this
+          let stats = new Stats()
+          let domPanel = new Stats.Panel('D', '#0ff', '#002')
+          stats.addPanel(domPanel)
+          stats.showPanel(3)
+          document.body.appendChild(stats.dom)
+          setTimeout(function timeoutFunc() {
+            // Only update DOM node graph when we have time to spare to call
+            // numDomNodes(), which is a fairly expensive function.
+            requestIdleCallback(() => {
+              domPanel.update(self.numDomNodes(document.body), 1500)
+              setTimeout(timeoutFunc, 100)
+            })
+          }, 100)
+        }
       },
       numDomNodes(node) {
         if(!node.children || node.children.length == 0) return 0
