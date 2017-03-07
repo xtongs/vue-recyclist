@@ -57,7 +57,7 @@
         num: 10,
         // list
         list: [],
-        tombstone: !!+localStorage['tombstone'],
+        tombstone: !+localStorage['tombstone'],
         size: this.num,
         offset: 200,
         spinner: true,
