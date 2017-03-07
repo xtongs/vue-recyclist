@@ -202,10 +202,14 @@
         this.getStartItemOffset()
       },
       getStartItemOffset() {
-        this.startOffset = this.items[this.start].top - this.$el.scrollTop
+        if (this.items[this.start]) {
+          this.startOffset = this.items[this.start].top - this.$el.scrollTop
+        }
       },
       setScrollTop() {
-        this.$el.scrollTop = this.items[this.start].top - this.startOffset
+        if (this.items[this.start]) {
+          this.$el.scrollTop = this.items[this.start].top - this.startOffset
+        }
       },
       onScroll() {
         if (this.$el.scrollTop + this.$el.offsetHeight > this.height - this.offset) {

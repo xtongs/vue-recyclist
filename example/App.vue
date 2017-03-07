@@ -5,12 +5,6 @@
       <h2>Infinite scroll list for Vue.js with DOM recycling. <a href="https://github.com/xtongs/vue-recyclist">Github</a></h2>
       <a @click="tombstone = !tombstone">{{ tombstone ? 'hide' : 'show'}} tombstones</a>
     </header>
-    <div ref="avatars" style="display:none">
-      <img src="./images/avatar0.jpg"/>
-      <img src="./images/avatar1.jpg"/>
-      <img src="./images/avatar2.jpg"/>
-      <img src="./images/avatar3.jpg"/>
-    </div>
     <vue-recyclist class="list" :list="list" :tombstone="tombstone" :size="size" :offset="offset"       :loadmore="loadmore" :spinner="spinner" :nomore="nomore">
       <template slot="tombstone" scope="props">
         <div class="item tombstone">
@@ -25,7 +19,6 @@
           </div>
         </div>
       </template>
-
       <template slot="item" scope="props">
         <div :id="props.data.id" class="item" @click="itemClicked(props)">
           <img class="avatar" :src="props.data.avatar" />
@@ -37,16 +30,22 @@
           </div>
         </div>
       </template>
-
-    <!--<div slot="spinner">Loading Data</div>-->
-    <!--<div slot="nomore">No More Data</div>-->
+      <!--<div slot="spinner">Loading Data</div>-->
+      <!--<div slot="nomore">No More Data</div>-->
     </vue-recyclist>
+    <div ref="avatars" style="display:none">
+      <img src="./images/avatar0.jpg"/>
+      <img src="./images/avatar1.jpg"/>
+      <img src="./images/avatar2.jpg"/>
+      <img src="./images/avatar3.jpg"/>
+    </div>
     <p class="info">Inspired by <a href="https://developers.google.com/web/updates/2016/07/infinite-scroller">Complexities of an Infinite Scroller</a></p>
   </div>
 </template>
 
 <script>
   import Data from './data'
+  import Stats from './stats.min'
   import VueRecyclist from '../src/index'
   export default {
     name: 'app',
@@ -76,6 +75,22 @@
         this.loadmore()
       }
     },
+    created() {
+      let self = this
+      let stats = new Stats()
+      let domPanel = new Stats.Panel('D', '#0ff', '#002')
+      stats.addPanel(domPanel)
+      stats.showPanel(3)
+      document.body.appendChild(stats.dom)
+      setTimeout(function timeoutFunc() {
+        // Only update DOM node graph when we have time to spare to call
+        // numDomNodes(), which is a fairly expensive function.
+        requestIdleCallback(() => {
+          domPanel.update(self.numDomNodes(document.body), 1500)
+          setTimeout(timeoutFunc, 100)
+        })
+      }, 100)
+    },
     methods: {
       getItem(id) {
         const avatar = Math.floor(Math.random() * Data.avatars)
@@ -98,6 +113,11 @@
       },
       itemClicked(props) {
         console.log('Item:' + props.index, props.data)
+      },
+      numDomNodes(node) {
+        if(!node.children || node.children.length == 0) return 0
+        let childrenCount = Array.from(node.children).map(this.numDomNodes)
+        return node.children.length + childrenCount.reduce(function(p, c){ return p + c; }, 0)
       }
     }
   }
@@ -120,7 +140,7 @@
       text-align: center;
       color: #2c3e50;
       overflow: hidden;
-      padding: 100px 20px 50px;
+      padding: 120px 20px 50px;
       width: 100%;
       height: 100%;
       box-sizing: border-box;
@@ -130,8 +150,7 @@
         top: 0;
         left: 0;
         width: 100%;
-        height: 100px;
-        padding: 10px 0;
+        height: 120px;
         text-align: center;
         display: flex;
         flex-direction: column;
@@ -170,6 +189,9 @@
       .cssloading-circle {
         background: #eee;
       }
+      .vue-recyclist-item {
+        contain: layout;
+      }
     }
   }
 </style>
@@ -190,7 +212,7 @@
       width: 100%;
       text-align: left;
       .avatar {
-        border-radius: 500px;
+        border-radius: 50%;
         margin-left: 15px;
         margin-right: 6px;
         min-width: 48px;
