@@ -214,6 +214,8 @@
       setScrollTop() {
         if (this.items[this.start]) {
           this.$el.scrollTop = this.items[this.start].top - this.startOffset
+          // reset start item offset
+          this.startOffset = 0
         }
       },
       makeScrollable() {
