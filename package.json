@@ -5,8 +5,7 @@
   "main": "dist/vue-recyclist.js",
   "author": "Tong <xtongs@gmail.com>",
   "files": [
-    "dist/vue-recyclist.js",
-    "src"
+    "dist/vue-recyclist.js"
   ],
   "scripts": {
     "dev": "cross-env NODE_ENV=development webpack-dev-server --inline --hot",
@@ -28,9 +27,6 @@
   },
   "homepage": "https://github.com/xtongs/vue-recyclist",
   "license": "MIT",
-  "dependencies": {
-    "vue": "^2.1.0"
-  },
   "devDependencies": {
     "babel-core": "^6.0.0",
     "babel-loader": "^6.0.0",
@@ -41,6 +37,7 @@
     "node-sass": "^4.5.0",
     "sass-loader": "^5.0.1",
     "url-loader": "^0.5.8",
+    "vue": "^2.1.0",
     "vue-loader": "^10.0.0",
     "vue-template-compiler": "^2.1.0",
     "webpack": "^2.2.0",
