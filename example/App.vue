@@ -5,10 +5,10 @@
       <h2>Infinite scroll list for Vue.js with DOM recycling. <a href="https://github.com/xtongs/vue-recyclist">Github</a></h2>
       <a @click="tombstone = !tombstone">{{ tombstone ? 'hide' : 'show'}} tombstones</a>
     </header>
-    <vue-recyclist class="list" :list="list" :tombstone="tombstone" :size="size" :offset="offset"       :loadmore="loadmore" :spinner="spinner" :nomore="nomore">
+    <vue-recyclist class="list" :list="list" :tombstone="tombstone" :size="size" :loadmore="loadmore">
       <template slot="tombstone" scope="props">
         <div class="item tombstone">
-          <img class="avatar" src="./images/unknown.jpg" />
+          <div class="avatar"></div>
           <div class="bubble">
             <p></p>
             <p></p>
@@ -21,7 +21,7 @@
       </template>
       <template slot="item" scope="props">
         <div :id="props.data.id" class="item" @click="itemClicked(props)">
-          <img class="avatar" :src="props.data.avatar" />
+          <div class="avatar" :style="{backgroundImage: 'url('+props.data.avatar+')'}"></div>
           <div class="bubble">
             <p>{{ props.data.msg }}</p>
             <div class="meta">
@@ -54,14 +54,10 @@
         // data
         initTime: new Date().getTime(),
         id: 0,
-        num: 10,
         // list
         list: [],
-        tombstone: !+localStorage['tombstone'],
-        size: this.num,
-        offset: 200,
-        spinner: true,
-        nomore: false
+        size: 20,
+        tombstone: !+localStorage['tombstone']
       }
     },
     components: {
@@ -69,7 +65,7 @@
     },
     watch: {
       tombstone(val) {
-        localStorage['tombstone'] = +val
+        localStorage['tombstone'] = +!val
         this.id = 0
         this.list = []
         this.loadmore()
@@ -86,17 +82,17 @@
           id: 10000 + id,
           avatar: this.$refs.avatars.children[avatar].src,
           msg: msg,
-          time: new Date(Math.floor(this.initTime + id * this.num * 1000 + Math.random() * this.num * 1000)).toString(),
+          time: new Date(Math.floor(this.initTime + id * this.size * 1000 + Math.random() * this.size * 1000)).toString(),
         }
       },
       loadmore() {
         let items = []
         setTimeout(() => {
-          for (let i = 0; i < this.num; i++) {
+          for (let i = 0; i < this.size; i++) {
             items.push(this.getItem(this.id++))
           }
           this.list = this.list.concat(items)
-        }, 1000)
+        }, 2000)
       },
       itemClicked(props) {
         console.log('Item:' + props.index, props.data)
@@ -223,7 +219,9 @@
         min-width: 48px;
         width: 48px;
         height: 48px;
-        background-color: #ddd;
+        background-image: url('./images/unknown.jpg');
+        background-size: cover;
+        outline: none;
       }
       p {
         margin: 0;

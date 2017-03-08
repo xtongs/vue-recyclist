@@ -1,9 +1,7 @@
 <template>
   <div class="vue-recyclist">
     <div ref="list" class="vue-recyclist-items" :style="{height: height + 'px'}">
-      <div v-for="(item, index) in items" v-if="index >= start - size && index < start + size"
-        class="vue-recyclist-item"
-        :style="{transform: 'translate3d(0,' + item.top + 'px,0)'}">
+      <div v-for="(item, index) in visibleItems" class="vue-recyclist-item" :style="{transform: 'translate3d(0,' + item.top + 'px,0)'}">
         <div v-show="tombstone" :class="{'vue-recyclist-transition': tombstone}" :style="{opacity: +!item.loaded}">
           <slot name="tombstone"></slot>
         </div>
@@ -13,12 +11,14 @@
       </div>
 
       <!--get tombstone and item heights from these invisible doms-->
-      <div :ref="'item'+index" v-for="(item, index) in items" v-if="!item.tomb && !item.height"
-        class="vue-recyclist-item vue-recyclist-invisible">
-        <slot name="item" :data="item.data"></slot>
-      </div>
-      <div ref="tomb" class="vue-recyclist-item vue-recyclist-invisible">
-        <slot name="tombstone"></slot>
+      <div class="vue-recyclist-pool">
+        <div :ref="'item'+index" v-for="(item, index) in items" v-if="!item.tomb && !item.height"
+          class="vue-recyclist-item vue-recyclist-invisible">
+          <slot name="item" :data="item.data"></slot>
+        </div>
+        <div ref="tomb" class="vue-recyclist-item vue-recyclist-invisible">
+          <slot name="tombstone"></slot>
+        </div>
       </div>
     </div>
 
@@ -53,6 +53,9 @@
       }
     },
     computed: {
+      visibleItems() {
+        return this.items.slice(Math.max(0, this.start - this.size), Math.min(this.items.length, this.start + this.size))
+      },
       containerHeight() {
         return this.$el && this.$el.offsetHeight || 0
       },
@@ -74,15 +77,15 @@
       },
       size: {
         type: Number,
-        default: 10 // The number of items added each time.
+        default: 20 // The number of items added each time.
       },
       offset: {
         type: Number,
         default: 200 // The number of pixels of additional length to allow scrolling to.
       },
       loadmore: {
-        type: Function, // The function of loading more items.
-        required: true
+        type: Function,
+        required: true // The function of loading more items.
       },
       spinner: {
         type: Boolean,
@@ -160,7 +163,7 @@
         this.$set(this.items, index, {
           data: data ? data : {},
           height: 0,
-          top: 0,
+          top: -1000,
           tomb: !data,
           loaded: !!data
         })
@@ -200,7 +203,8 @@
             break
           }
         }
-        this.getStartItemOffset()
+        // scrolling does not need recalculate scrolltop
+        // this.getStartItemOffset()
       },
       getStartItemOffset() {
         if (this.items[this.start]) {
@@ -251,7 +255,7 @@
       margin: 0;
       padding: 0;
       .vue-recyclist-invisible {
-        top: -100px;
+        top: -1000px;
         visibility: hidden;
       }
       .vue-recyclist-item {
