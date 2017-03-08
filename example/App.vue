@@ -21,7 +21,7 @@
       </template>
       <template slot="item" scope="props">
         <div :id="props.data.id" class="item" @click="itemClicked(props)">
-          <div class="avatar" :style="{backgroundImage: 'url('+props.data.avatar+')'}"></div>
+          <div class="avatar" :style="{backgroundImage: 'url(' + (props.data.avatar || '') + ')'}"></div>
           <div class="bubble">
             <p>{{ props.data.msg }}</p>
             <div class="meta">
