@@ -4,7 +4,8 @@ var webpack = require('webpack')
 module.exports = {
   entry: {
     'index': './example/main.js',
-    'vue-recyclist': './src/index.js'
+    'vue-recyclist': './src/index.js',
+    'vue-recyclist.min': './src/index.js'
   },
   output: {
     path: path.resolve(__dirname, './example'),
@@ -49,6 +50,7 @@ module.exports = {
       'vue$': 'vue/dist/vue.' + (process.env.NODE_ENV === 'production' ? 'min' : 'common') + '.js'
     }
   },
+  devtool: 'source-map',
   devServer: {
     historyApiFallback: true,
     noInfo: true,
@@ -67,6 +69,7 @@ if (process.env.NODE_ENV === 'production') {
       }
     }),
     new webpack.optimize.UglifyJsPlugin({
+      include: /\.min\.js$/,
       sourceMap: true,
       compress: {
         warnings: false
