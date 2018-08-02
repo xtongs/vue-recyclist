@@ -1,4 +1,4 @@
-# vue-recyclist
+# vue-recyclist (not maintained)
 
 > Infinite scroll list for Vue.js (v2.1+) with DOM recycling.
 
